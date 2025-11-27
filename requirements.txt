@@ -1,0 +1,12 @@
+# requirements.txt
+Flask
+Flask-CORS
+numpy
+# face-recognition is a complex dependency that relies on dlib.
+# It can be challenging to install on Vercel and may exceed the
+# function size limit. You might need to use a pre-compiled wheel
+# or a custom build, but start with the default:
+face-recognition
+# Use the headless version of OpenCV to avoid conflicts with system libraries
+# not present on the Vercel function environment.
+opencv-python-headless

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Attendance System</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;min-height:100vh;background:linear-gradient(135deg,#1a1a2e,#0f3460);display:flex;justify-content:center;align-items:center;padding:20px}
+        .box{background:rgba(255,255,255,.08);border-radius:20px;padding:30px;max-width:520px;width:100%;border:1px solid rgba(255,255,255,.1)}
+        h1{color:#fff;text-align:center;margin-bottom:20px;background:linear-gradient(90deg,#5e81f4,#1fcff1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .vid-wrap{position:relative;border-radius:12px;overflow:hidden;border:3px solid #5e81f4;margin-bottom:20px}
+        video{width:100%;height:300px;background:#111;display:block}
+        .scan{position:absolute;width:100%;height:2px;background:linear-gradient(90deg,transparent,#1fcff1,transparent);animation:scan 2s infinite;top:0}
+        @keyframes scan{0%,100%{top:0}50%{top:100%}}
+        button{width:100%;padding:14px;font-size:16px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#5e81f4,#4c6ef5);border:none;border-radius:10px;cursor:pointer;transition:.3s}
+        button:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(94,129,244,.5)}
+        #result{margin-top:20px;padding:16px;border-radius:10px;background:rgba(255,255,255,.05);color:#fff;white-space:pre-line;font-weight:bold;text-align:center;min-height:80px}
+        .ok{background:rgba(16,185,129,.15);color:#10b981}
+        .warn{background:rgba(245,158,11,.15);color:#f59e0b}
+        .err{background:rgba(239,68,68,.15);color:#ef4444}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🎓 Smart Attendance</h1>
+        <div class="vid-wrap">
+            <video id="video" autoplay></video>
+            <div class="scan"></div>
+        </div>
+        <button onclick="mark()">📸 Mark Attendance</button>
+        <p id="result">⏳ Waiting...</p>
+    </div>
+<script>
+const v=document.getElementById("video"),r=document.getElementById("result");
+navigator.mediaDevices.getUserMedia({video:1}).then(s=>v.srcObject=s).catch(e=>r.innerText="⚠ Camera: "+e);
+function cap(){const c=document.createElement("canvas");c.width=v.videoWidth||480;c.height=v.videoHeight||360;c.getContext("2d").drawImage(v,0,0,c.width,c.height);return c.toDataURL("image/jpeg").split(",")[1]}
+async function mark(){
+    r.className="";r.innerText="🔍 Recognizing...";
+    try{
+        const res=await fetch("http://localhost:5000/recognize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:cap()})});
+        const d=await res.json();
+        if(d.status==="recognized"){r.className="ok";r.innerText="✔ Attendance Marked!\n\nName: "+d.name+"\nSection: "+d.section+"\nDept: "+d.department}
+        else if(d.status==="detected"){r.className="warn";r.innerText="👀 Face detected but not recognized!"}
+        else if(d.status==="no_face"){r.className="err";r.innerText="❌ No face detected!"}
+        else{r.className="err";r.innerText="⚠ "+(d.message||"Error")}
+    }catch(e){r.className="err";r.innerText="⚠ Connection error: "+e}
+}
+</script>
+</body>
+</html>
